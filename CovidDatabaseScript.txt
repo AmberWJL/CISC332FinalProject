@@ -1,0 +1,237 @@
+drop database covidDB;
+create database covidDB;
+
+CREATE TABLE Company(
+CName       VARCHAR(30)  NOT NULL,
+Street      VARCHAR(30),
+City        VARCHAR(20),
+Province    CHAR(2),
+PC          CHAR(6),
+PRIMARY KEY(CName)
+);
+
+
+CREATE TABLE Lot(
+LotID           CHAR(6)  NOT NULL,
+ProductionDate  DATE,
+ExpiryDate      DATE,
+NumDose         INTEGER,
+CName           VARCHAR(30)  NOT NULL,
+PRIMARY KEY(LotID),
+FOREIGN KEY(CName) REFERENCES Company(CName)
+on delete restrict
+);
+
+
+CREATE TABLE Patient(
+OHIP            CHAR(10)     NOT NULL,
+LastName        VARCHAR(20),
+FirstName       VARCHAR(20),
+Bdate			DATE,
+PRIMARY KEY(OHIP)
+);
+
+
+CREATE TABLE Spouse(
+OHIP            CHAR(10)     NOT NULL,
+LastName        VARCHAR(20),
+FirstName       VARCHAR(20),
+PNumber			INTEGER,
+POHIP           CHAR(10)     NOT NULL,
+PRIMARY KEY(OHIP),
+FOREIGN KEY(POHIP) REFERENCES Patient(OHIP)
+on delete cascade 
+);
+
+
+CREATE TABLE  VaccinationSite(
+SiteName    VARCHAR(40)     NOT NULL,
+Street      VARCHAR(30),
+City        VARCHAR(20),
+Province    CHAR(2),
+PC          CHAR(6),
+PRIMARY KEY(SiteName)
+);
+
+CREATE TABLE MedicalPractice(
+MedName        VARCHAR(50)      NOT NULL,
+PhoneNum       INTEGER,
+PRIMARY KEY(MedName)
+);
+
+CREATE TABLE Worker(
+ID              CHAR(4)         NOT NULL,
+LastName        VARCHAR(20),
+FirstName       VARCHAR(20),
+PRIMARY KEY(ID)
+);
+
+CREATE TABLE Doctor(
+ID              CHAR(4)         NOT NULL,
+PracName        VARCHAR(50)     NOT NULL, 
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES Worker(ID) on delete cascade,
+FOREIGN KEY(PracName) REFERENCES MedicalPractice(MedName) on delete cascade
+);
+
+/*Here I add WorkSite as NOT NULL to make sure total participation of nurse working in a site'*/
+CREATE TABLE Nurse(
+ID              CHAR(4)            NOT NULL,
+WorkSite        VARCHAR(40)        NOT NULL, 
+PRIMARY KEY(ID),
+FOREIGN KEY(ID) REFERENCES Worker(ID) on delete cascade,
+FOREIGN KEY(WorkSite) REFERENCES VaccinationSite (SiteName) on delete cascade
+);
+
+
+CREATE TABLE Credential(
+ID              VARCHAR(4)      NOT NULL,
+Credential      CHAR(2)         NOT NULL,
+PRIMARY KEY(ID, Credential),
+FOREIGN KEY(ID) REFERENCES Worker(ID) on delete cascade
+);
+
+CREATE TABLE ShipLot(
+LotID           CHAR(6)         NOT NULL,
+SName           VARCHAR(40)     NOT NULL,
+PRIMARY KEY(LotID, SName),
+FOREIGN KEY(LotID) REFERENCES Lot(LotID) on delete cascade,
+FOREIGN KEY(SName) REFERENCES VaccinationSite(SiteName) on delete cascade
+);
+
+
+CREATE TABLE NurseWorks(
+SName        VARCHAR(40)        NOT NULL, 
+NurseID      CHAR(4)            NOT NULL,
+PRIMARY KEY(SName, NurseID),
+FOREIGN KEY(SName) REFERENCES VaccinationSite(SiteName) on delete cascade,
+FOREIGN KEY(NurseID) REFERENCES Nurse(ID) on delete cascade
+);
+
+
+CREATE TABLE DoctorWorks(
+SName        VARCHAR(40)        NOT NULL, 
+DocID        CHAR(4)            NOT NULL,
+PRIMARY KEY(SName, DocID),
+FOREIGN KEY(SName) REFERENCES VaccinationSite (SiteName) on delete cascade,
+FOREIGN KEY(DocID) REFERENCES Doctor(ID) on delete cascade
+);
+
+
+CREATE TABLE Vaccination(
+LotID           CHAR(6)         NOT NULL,
+OHIP            CHAR(10)        NOT NULL,
+SiteName        VARCHAR(40)     NOT NULL,
+VDate           DATE,
+VTime           TIME, 
+PRIMARY KEY(LotID, OHIP, SiteName),
+FOREIGN KEY(LotID) REFERENCES Lot(LotID) on delete restrict,
+FOREIGN KEY(OHIP) REFERENCES Patient(OHIP) on delete restrict,
+FOREIGN KEY(SiteName) REFERENCES VaccinationSite (SiteName) on delete restrict
+);
+
+
+
+insert into Company values
+('Pfizer-BioNTech','17300 Trans-Canada Highway','Kirkland','QC','H9J2M5'),
+('Astrazeneca','Suite 5000-1004 Middlegate Road','Mississauga','ON','L4Y1M4'),
+('Johnson & Johnson','88 McNabb Street','Markham','ON','L3R5L2'),
+('Moderna','200 Technology Square','Cambridge','MA','L2P8U1')
+;
+
+
+insert into Lot values
+('FD7204' , '2021-05-22', '2031-06-21', 3, 'Pfizer-BioNTech'),
+('MD7984' , '2021-01-30', '2031-09-11', 2, 'Moderna'),
+('AZ9871', NULL, NULL, 1, 'Astrazeneca'),
+('EY0578', '2021-07-09','2022-07-09', 2 , 'Pfizer-BioNTech')
+;
+
+
+insert into Patient values
+('1234666890', 'John','Smith', '1981-06-19'),
+('8886655551', 'Franklin','Wong', '1988-05-22'),
+('4534534532', 'Alicia','Zelaya','1995-01-01'),
+('1236790978','John','H. Watson','1852-08-09')
+;
+
+
+insert into Spouse values
+('9879879871', 'James', 'Borg', 666884444, '4534534532'),
+('1234567895','Harry','Potter',777866541, '8886655551'),
+('1234567897','Tony','Stark',567236087, '1236790978')
+
+;
+
+
+insert into VaccinationSite values
+('KFL&A Public Health Clinics', '221 Portsmouth Ave', 'Kingston', 'ON', 'K7M 1V5'),
+('Rexall Kingston','240 Montreal St','Kingston','ON','K7K3G8'),
+('Shoppers Kingston Downtown','445 Princess St','Kingston','ON','K7L1E3'),
+('Kingston Family Health','175 Princess St','Kingston','ON','K7L1A9'),
+('Kingston Community Health','234 Concession St','Kingston','ON','K7K6W6')
+;
+
+insert into MedicalPractice values
+('Health For Life Medical Centre', 2208140696),
+('CDK Family Medicine and Walk-In Clinic',3302928102)
+;
+
+
+insert into Worker values
+('1234', 'Abner', 'Brown'), 
+('1334', 'James', 'Borg'),
+('0921', 'Iris', 'Wong'),
+('9224', 'Alice', 'Smith'),
+('9984', 'Groge', 'Kare')
+;
+
+
+insert into Doctor values
+('9224', 'Health For Life Medical Centre'),
+('9984', 'CDK Family Medicine and Walk-In Clinic')
+;
+
+
+insert into Nurse values
+('1234', 'Rexall Kingston'), 
+('1334', 'KFL&A Public Health Clinics'),
+('0921', 'KFL&A Public Health Clinics')
+;
+
+
+insert into Credential values
+('1334', 'NP'),
+('1334', 'RN'),
+('1234', 'NP'),
+('0921', 'NP'),
+('9984', 'MD'),
+('9224', 'MD')
+;
+
+
+insert into NurseWorks values
+('Rexall Kingston', '1234'),
+('KFL&A Public Health Clinics', '1334'),
+('KFL&A Public Health Clinics', '0921')
+;
+
+
+insert into DoctorWorks values
+('KFL&A Public Health Clinics', '9224'),
+('Kingston Community Health', '9224')
+;
+
+
+insert into Vaccination values
+('FD7204', '1234666890', 'KFL&A Public Health Clinics', "2021-09-01",'07:20:00'),
+('MD7984', '8886655551', 'Kingston Community Health', "2021-01-21", NULL),
+('AZ9871', '4534534532','Kingston Family Health','2022-02-08','10:20:00'),
+('EY0578', '1236790978','Kingston Community Health','2022-01-07','11:20:00')
+;
+
+
+
+
+
+
